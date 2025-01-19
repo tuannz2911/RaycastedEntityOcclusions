@@ -18,7 +18,7 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     public int tickCounter = 0;
     public RaycastedEntityOcclusion plugin = this;
 
-    // Use ConcurrentHashMap for thread-safe access
+    //ConcurrentHashMap allows for Thread-safe operations. Don't use regular hashmaps
     private final Map<Player, Set<Entity>> entitiesToShow = new ConcurrentHashMap<>();
     private final Map<Player, Set<Entity>> entitiesToHide = new ConcurrentHashMap<>();
 
@@ -29,16 +29,13 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         new BukkitRunnable() {
             @Override
             public void run() {
-                // Clear the maps at the start of each tick
                 entitiesToShow.clear();
                 entitiesToHide.clear();
 
-                // Check visibility for all players
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     checkEntityVisibility(player);
                 }
 
-                // Apply visibility changes at the end of the tick
                 applyVisibilityChanges();
 
                 tickCounter++;
@@ -46,7 +43,7 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
                     tickCounter = 0;
                 }
             }
-        }.runTaskTimer(this, 0L, 1L); // Run every tick (20 times per second)
+        }.runTaskTimer(this, 0L, 1L);
     }
 
     @Override
@@ -109,15 +106,12 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     }
 
     private void loadConfig() {
-        // Ensure the config file exists
         saveDefaultConfig();
 
-        // Load values from config
         alwaysShowRadius = getConfig().getInt("AlwaysShowRadius", 4);
         raycastRadius = getConfig().getInt("RaycastRadius", 64);
         searchRadius = getConfig().getInt("SearchRadius", 72);
 
-        // Log loaded values
         getLogger().info("AlwaysShowRadius: " + alwaysShowRadius);
         getLogger().info("RaycastRadius: " + raycastRadius);
         getLogger().info("SearchRadius: " + searchRadius);
