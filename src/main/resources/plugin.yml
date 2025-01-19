@@ -1,0 +1,7 @@
+name: RaycastedEntityOcclusion
+version: '1.0-SNAPSHOT'
+main: games.cubi.raycastedEntityOcclusion.RaycastedEntityOcclusion
+api-version: '1.21'
+prefix: EntityOcclusion
+authors: [ _Cubicake ]
+website: https://cubi.games
