@@ -1,5 +1,5 @@
 name: RaycastedEntityOcclusion
-version: '1.0-SNAPSHOT'
+version: ${version}
 main: games.cubi.raycastedEntityOcclusion.RaycastedEntityOcclusion
 api-version: '1.21'
 prefix: EntityOcclusion

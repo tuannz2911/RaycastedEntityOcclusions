@@ -1,3 +1,5 @@
 AlwaysShowRadius: 4
 RaycastRadius: 64
 SearchRadius: 72
+MoreChecks: false #This will enable more raycasts per mob, increasing performance hit but showing partially visible mobs
+OccludePlayers: false #This will disable occlusion checks for players. Setting this to true is the interim fix for players being removed from tab list

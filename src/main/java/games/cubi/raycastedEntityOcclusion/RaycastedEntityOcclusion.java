@@ -4,8 +4,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.BoundingBox;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +18,8 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     public int alwaysShowRadius;
     public int raycastRadius;
     public int searchRadius;
+    public boolean moreChecks;
+    public boolean occludePlayers;
     public int tickCounter = 0;
     public RaycastedEntityOcclusion plugin = this;
 
@@ -51,10 +56,21 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         // Plugin shutdown logic
     }
 
+    @EventHandler
+    public void entityTargetLivingEntityEvent(EntityTargetLivingEntityEvent event) {
+        if (event.getTarget() instanceof Player) {
+            Player player = (Player) event.getTarget();
+            addEntityToShow(player, event.getEntity());
+        }
+    }
+
     private void checkEntityVisibility(Player player) {
         List<Entity> nearbyEntities = player.getNearbyEntities(searchRadius, searchRadius, searchRadius);
 
         for (Entity entity : nearbyEntities) {
+            if (entity instanceof Player && !occludePlayers) {
+                continue;
+            }
             double distance = player.getLocation().distance(entity.getLocation());
             if (distance <= alwaysShowRadius) {
                 // Always show entities within this radius
@@ -67,18 +83,50 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
                 continue;
             }
             if (!player.canSee(entity) || tickCounter % 10 == 0) {
-                // Perform raycast to check visibility
-                Location entityLocation = entity.getLocation().add(0, entity.getHeight() / 2, 0);
-                Raycast.asyncRaycast(player.getEyeLocation(), entityLocation, plugin, canSeePlayer -> {
-                    if (canSeePlayer) {
-                        addEntityToShow(player, entity);
-                    } else {
-                        addEntityToHide(player, entity);
-                    }
-                });
+                //check whether to run intensive or light checks
+                Double height = entity.getHeight();
+                if (moreChecks) {
+                    Double width = entity.getWidth();
+                    Location checkOne = entity.getLocation().add(0, height - 0.01, 0);
+                    Location checkTwo = entity.getLocation().add(0, 0.01, 0);
+                    Location checkThree = entity.getLocation().add(width / 2, height / 2, 0);
+                    Location checkFour = entity.getLocation().add(-width / 2, height / 2, 0);
+
+                    Raycast.asyncRaycast(player.getEyeLocation(), checkOne, plugin, canSeePlayer -> {
+                        if (canSeePlayer) {
+                            addEntityToShow(player, entity);
+                        } else {
+                            Raycast.asyncRaycast(player.getEyeLocation(), checkTwo, plugin, canSeePlayer2 -> {
+                                if (canSeePlayer2) addEntityToShow(player, entity);
+                                else {
+                                    Raycast.asyncRaycast(player.getEyeLocation(), checkThree, plugin, canSeePlayer3 -> {
+                                        if (canSeePlayer3) addEntityToShow(player, entity);
+                                        else {
+                                            Raycast.asyncRaycast(player.getEyeLocation(), checkFour, plugin, canSeePlayer4 -> {
+                                                if (canSeePlayer4) addEntityToShow(player, entity);
+                                                else addEntityToHide(player, entity);
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    Location entityLocation = entity.getLocation().add(0, height / 2, 0);
+
+                    Raycast.asyncRaycast(player.getEyeLocation(), entityLocation, plugin, canSeePlayer -> {
+                        if (canSeePlayer) {
+                            addEntityToShow(player, entity);
+                        } else {
+                            addEntityToHide(player, entity);
+                        }
+                    });
+                }
             }
         }
     }
+
 
     private void addEntityToShow(Player player, Entity entity) {
         entitiesToShow.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet()).add(entity);
@@ -88,6 +136,10 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     private void addEntityToHide(Player player, Entity entity) {
         entitiesToHide.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet()).add(entity);
         entitiesToShow.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet()).remove(entity);
+    }
+
+    private boolean entityPendingVisible(Player player, Entity entity) {
+        return entitiesToShow.get(player) != null && entitiesToShow.get(player).contains(entity);
     }
 
     private void applyVisibilityChanges() {
@@ -111,6 +163,9 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         alwaysShowRadius = getConfig().getInt("AlwaysShowRadius", 4);
         raycastRadius = getConfig().getInt("RaycastRadius", 64);
         searchRadius = getConfig().getInt("SearchRadius", 72);
+        moreChecks = getConfig().getBoolean("MoreChecks", false);
+        occludePlayers = getConfig().getBoolean("OccludePlayers", false);
+
 
         getLogger().info("AlwaysShowRadius: " + alwaysShowRadius);
         getLogger().info("RaycastRadius: " + raycastRadius);

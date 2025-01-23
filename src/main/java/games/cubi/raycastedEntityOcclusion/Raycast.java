@@ -31,7 +31,7 @@ public class Raycast {
                 } else {
                     // A solid block was hit
                     callback.onResult(false);
-                    plugin.getLogger().info("Raycast hit a solid block: " + result.getHitBlock().getType() + " at " + result.getHitBlock().getLocation());
+                    //plugin.getLogger().info("Raycast hit a solid block: " + result.getHitBlock().getType() + " at " + result.getHitBlock().getLocation());
 
                 }
             }
