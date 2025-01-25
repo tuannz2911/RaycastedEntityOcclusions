@@ -5,3 +5,13 @@ api-version: '1.21'
 prefix: EntityOcclusion
 authors: [ _Cubicake ]
 website: https://cubi.games
+commands:
+  raycastedentityocclusion:
+    description: RaycastedEntityOcclusion command
+    usage: /<command>
+    permission: raycastedentityocclusion.command
+    aliases: [reo]
+permissions:
+    raycastedentityocclusion.command:
+        description: Permission to use the RaycastedEntityOcclusion command
+        default: op
