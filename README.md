@@ -13,11 +13,11 @@ Use cases:
 - Reduce client lag
   - In servers with large megabases full of item frames, armour stands and other entities, RaycastedEntityOcclusion will prevent these entities from lagging the client unless they are within line-of-sight
 
-Config info:
+Default Config:
 
-- AlwaysShowRadius: 4
-- RaycastRadius: 64
-- SearchRadius: 72
+- AlwaysShowRadius: 8
+- RaycastRadius: 48
+- SearchRadius: 52
 - MoreChecks: false
 - OccludePlayers: false
 - RecheckInterval: 20 
