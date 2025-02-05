@@ -36,3 +36,4 @@ OccludePlayers toggles whether players will be checked. Enabling this prevents E
 Known issues:
 - Due to the nature of the plugin, there will be a short delay once an entity should be visible before it appears, causing it to appear like it "popped" into view. This issue is partially resolved by turning MoreChecks on
 - If OccludePlayers is set to true any occluded players will be removed from tablist
+- When updating the plugin to a version with more config versions, no checks are performed to detect this and add the new configs to config.yml. This means that the config file will be missing several options. (This is an issue when updating to v1.1.0 or v1.2.0). To fix, just copy the new config options from the Default Config section above.
