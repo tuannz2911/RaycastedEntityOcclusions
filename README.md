@@ -1,4 +1,8 @@
-This is a simple server-side plugin for PaperMC (May also work with Spigot, this is untested) that hides entities from players if they do not have line-of-sight. All raycasts are run async to reduce performance impact.
+Latest version: v1.2.2
+
+The latest version can currently only be found on Modrinth https://modrinth.com/plugin/raycasted-entity-occlusion/
+
+This is a simple server-side plugin for PaperMC (May also work with Spigot, this is untested) that hides/culls entities from players if they do not have line-of-sight. All raycasts are run async to reduce performance impact.
 Use cases:
 
 - To prevent mob nametags from being visible through walls
@@ -11,16 +15,24 @@ Use cases:
 
 Config info:
 
-The config has three settings:
-
-AlwaysShowRadius: 4
-RaycastRadius: 64
-SearchRadius: 72
+- AlwaysShowRadius: 4
+- RaycastRadius: 64
+- SearchRadius: 72
+- MoreChecks: false
+- OccludePlayers: false
+- RecheckInterval: 20 
 
 Entities inside the AlwaysShowRadius are always shown, even if occluded. This is to prevent nasty surprises when turning a corner quickly. 
-The SearchRadius is a misnomer, it's actually a cubic bounding box around the player within which entities will be checked. If an entity is within the SearchRadius but not the RaycastRadius, it will be automatically hidden.
-The RaycastRadius is the radius where entities will be checked. If an entity is currently hidden it will run a raycast every tick. This is to quickly detect when the entity becomes visible. If the entity is currently visible, it will only ruun the raycast every 10 ticks to reduce performance impact.
+
+The SearchRadius is a cubic bounding box around the player within which entities will be checked. If an entity is within the SearchRadius but not the RaycastRadius, it will be automatically hidden.
+
+The RaycastRadius is the radius where entities will be checked. If an entity is currently hidden it will run a raycast every tick. This is to quickly detect when the entity becomes visible. If the entity is currently visible, it will only run the raycast every {RecheckInterval} ticks to reduce performance impact.
+
+MoreChecks toggles between two raycasting modes. By default (MoreChecks = false) the plugin runs one raycast from the center of each mob to the player. This means that if the center of the mob is hidden but some parts should be visible, the player won't be able to see the mob at all. Enabling MoreChecks runs a raycast from the top, bottom, left and right of the entity to the player.
+
+OccludePlayers toggles whether players will be checked. Enabling this prevents ESP mods from revealing players.
+
 
 Known issues:
-- Players are also occluded. This itself is not an issue, however hiding players also removes them from the tab list and command autocomplete.
-- Due to the nature of the plugin, there will be a short delay once an entity should be visible before it appears, causing it to appear like it "popped" into view
+- Due to the nature of the plugin, there will be a short delay once an entity should be visible before it appears, causing it to appear like it "popped" into view. This issue is partially resolved by turning MoreChecks on
+- If OccludePlayers is set to true any occluded players will be removed from tablist
