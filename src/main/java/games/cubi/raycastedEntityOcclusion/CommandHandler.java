@@ -14,8 +14,19 @@ public class CommandHandler implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length != 0 && args[0].equalsIgnoreCase("reload")) {
+            plugin.loadConfig();
+            plugin.getCheckEntityVisibility().updateConfigValues();
+            sender.sendMessage("RaycastedEntityOcclusion config reloaded.");
+            return true;
+        }
         sender.sendMessage("RaycastedEntityOcclusion v" + plugin.getDescription().getVersion());
-
-        return false;
+        sender.sendMessage("AlwaysShowRadius: " + plugin.alwaysShowRadius);
+        sender.sendMessage("RaycastRadius: " + plugin.raycastRadius);
+        sender.sendMessage("SearchRadius: " + plugin.searchRadius);
+        sender.sendMessage("MoreChecks: " + plugin.moreChecks);
+        sender.sendMessage("OccludePlayers: " + plugin.occludePlayers);
+        sender.sendMessage("RecheckInterval: " + plugin.recheckInterval);
+        return true;
     }
 }

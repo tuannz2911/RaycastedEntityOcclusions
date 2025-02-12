@@ -2,5 +2,5 @@ AlwaysShowRadius: 8
 RaycastRadius: 48
 SearchRadius: 52
 MoreChecks: false #This will enable more raycasts per mob, increasing performance hit but showing partially visible mobs
-OccludePlayers: false #This will disable occlusion checks for players. Setting this to true is the interim fix for players being removed from tab list
+OccludePlayers: false #Enabling this will make the plugin cull hidden players alongside entities
 RecheckInterval: 20 #Time in ticks between rechecking visible mobs

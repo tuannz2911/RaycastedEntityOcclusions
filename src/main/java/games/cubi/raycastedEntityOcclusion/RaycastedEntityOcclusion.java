@@ -1,5 +1,6 @@
 package games.cubi.raycastedEntityOcclusion;
 
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class RaycastedEntityOcclusion extends JavaPlugin {
@@ -32,15 +33,17 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     }
 
 
-    private void loadConfig() {
+    public void loadConfig() {
         saveDefaultConfig();
+        reloadConfig();
+        FileConfiguration config = getConfig();
 
-        alwaysShowRadius = getConfig().getInt("AlwaysShowRadius", 4);
-        raycastRadius = getConfig().getInt("RaycastRadius", 64);
-        searchRadius = getConfig().getInt("SearchRadius", 72);
-        moreChecks = getConfig().getBoolean("MoreChecks", false);
-        occludePlayers = getConfig().getBoolean("OccludePlayers", false);
-        recheckInterval = getConfig().getInt("RecheckInterval", 10);
+        alwaysShowRadius = config.getInt("AlwaysShowRadius", 4);
+        raycastRadius = config.getInt("RaycastRadius", 64);
+        searchRadius = config.getInt("SearchRadius", 72);
+        moreChecks = config.getBoolean("MoreChecks", false);
+        occludePlayers = config.getBoolean("OccludePlayers", false);
+        recheckInterval = config.getInt("RecheckInterval", 10);
 
 
         getLogger().info("AlwaysShowRadius: " + alwaysShowRadius);
@@ -49,5 +52,8 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         getLogger().info("MoreChecks: " + moreChecks);
         getLogger().info("OccludePlayers: " + occludePlayers);
         getLogger().info("RecheckInterval: " + recheckInterval);
+    }
+    public CheckEntityVisibility getCheckEntityVisibility() {
+        return checkEntityVisibility;
     }
 }

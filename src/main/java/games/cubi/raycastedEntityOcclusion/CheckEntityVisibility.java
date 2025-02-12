@@ -54,6 +54,15 @@ public class CheckEntityVisibility {
         }.runTaskTimer(plugin, 0L, 1L);
     }
 
+    public void updateConfigValues() {
+        this.alwaysShowRadius = plugin.alwaysShowRadius;
+        this.raycastRadius = plugin.raycastRadius;
+        this.searchRadius = plugin.searchRadius;
+        this.moreChecks = plugin.moreChecks;
+        this.occludePlayers = plugin.occludePlayers;
+        this.recheckInterval = plugin.recheckInterval;
+    }
+
     public void runVisibilityCheck(Player player) {
         World world = player.getWorld();
         List<Entity> nearbyEntities = player.getNearbyEntities(searchRadius, searchRadius, searchRadius);
@@ -76,7 +85,10 @@ public class CheckEntityVisibility {
                 addEntityToHide(player, entity);
                 continue;
             }
-            if (!player.canSee(entity) || plugin.tickCounter % recheckInterval == 0) {
+            Boolean canSee = player.canSee(entity);
+            int check = tickCounter % recheckInterval;
+            //plugin.getLogger().info("check: " + check + " cansee " + canSee);
+            if (!canSee || check == 0) {
                 //check whether to run intensive or light checks
                 Double height = entity.getHeight();
                 if (moreChecks) {
@@ -137,13 +149,19 @@ public class CheckEntityVisibility {
         for (Map.Entry<Player, Set<Entity>> entry : entitiesToShow.entrySet()) {
             Player player = entry.getKey();
             for (Entity entity : entry.getValue()) {
-                player.showEntity(plugin, entity);
+                if (entity instanceof Player p) {
+                    player.showPlayer(plugin, p);
+                }
+                else player.showEntity(plugin, entity);
             }
         }
         for (Map.Entry<Player, Set<Entity>> entry : entitiesToHide.entrySet()) {
             Player player = entry.getKey();
             for (Entity entity : entry.getValue()) {
-                player.hideEntity(plugin, entity);
+                if (entity instanceof Player p) {
+                    player.hidePlayer(plugin, p);
+                }
+                else player.hideEntity(plugin, entity);
             }
         }
     }
