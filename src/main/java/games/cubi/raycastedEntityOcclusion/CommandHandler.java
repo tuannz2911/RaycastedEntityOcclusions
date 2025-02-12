@@ -25,7 +25,7 @@ public class CommandHandler implements CommandExecutor {
         sender.sendMessage("RaycastRadius: " + plugin.raycastRadius);
         sender.sendMessage("SearchRadius: " + plugin.searchRadius);
         sender.sendMessage("MoreChecks: " + plugin.moreChecks);
-        sender.sendMessage("OccludePlayers: " + plugin.occludePlayers);
+        sender.sendMessage("CullPlayers: " + plugin.cullPlayers);
         sender.sendMessage("RecheckInterval: " + plugin.recheckInterval);
         return true;
     }

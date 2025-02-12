@@ -19,7 +19,8 @@ public class CheckEntityVisibility {
     private int raycastRadius;
     private int searchRadius;
     private boolean moreChecks;
-    private boolean occludePlayers;
+    private boolean cullPlayers;
+    private boolean sneakCull;
     private int recheckInterval;
     private int tickCounter = 0;
     //ConcurrentHashMap allows for Thread-safe operations. Don't use regular hashmaps
@@ -32,7 +33,8 @@ public class CheckEntityVisibility {
         this.raycastRadius = plugin.raycastRadius;
         this.searchRadius = plugin.searchRadius;
         this.moreChecks = plugin.moreChecks;
-        this.occludePlayers = plugin.occludePlayers;
+        this.cullPlayers = plugin.cullPlayers;
+        this.sneakCull = plugin.sneakCull;
         this.recheckInterval = plugin.recheckInterval;
         new BukkitRunnable() {
             @Override
@@ -59,7 +61,8 @@ public class CheckEntityVisibility {
         this.raycastRadius = plugin.raycastRadius;
         this.searchRadius = plugin.searchRadius;
         this.moreChecks = plugin.moreChecks;
-        this.occludePlayers = plugin.occludePlayers;
+        this.cullPlayers = plugin.cullPlayers;
+        this.sneakCull = plugin.sneakCull;
         this.recheckInterval = plugin.recheckInterval;
     }
 
@@ -71,7 +74,10 @@ public class CheckEntityVisibility {
             if (world != player.getWorld()) {
                 return;
             }
-            if (entity instanceof Player && !occludePlayers) {
+            if (entity instanceof Player && !cullPlayers) {
+                continue;
+            }
+            if (entity instanceof Player p && sneakCull && !p.isSneaking()) {
                 continue;
             }
             double distance = player.getLocation().distance(entity.getLocation());
@@ -134,12 +140,14 @@ public class CheckEntityVisibility {
     }
 
 
-    private void addEntityToShow(Player player, Entity entity) {
+
+
+    public void addEntityToShow(Player player, Entity entity) {
         entitiesToShow.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet()).add(entity);
         entitiesToHide.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet()).remove(entity);
     }
 
-    private void addEntityToHide(Player player, Entity entity) {
+    public void addEntityToHide(Player player, Entity entity) {
         entitiesToHide.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet()).add(entity);
         entitiesToShow.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet()).remove(entity);
     }
