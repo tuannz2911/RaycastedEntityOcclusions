@@ -4,6 +4,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public class CommandHandler implements CommandExecutor {
     RaycastedEntityOcclusion plugin;
@@ -17,7 +18,7 @@ public class CommandHandler implements CommandExecutor {
         if (args.length != 0 && args[0].equalsIgnoreCase("reload")) {
             plugin.loadConfig();
             plugin.getCheckEntityVisibility().updateConfigValues();
-            sender.sendMessage("RaycastedEntityOcclusion config reloaded.");
+            if (!(sender == null)) sender.sendMessage("RaycastedEntityOcclusion config reloaded.");
             return true;
         }
         sender.sendMessage("RaycastedEntityOcclusion v" + plugin.getDescription().getVersion());
@@ -26,6 +27,7 @@ public class CommandHandler implements CommandExecutor {
         sender.sendMessage("SearchRadius: " + plugin.searchRadius);
         sender.sendMessage("MoreChecks: " + plugin.moreChecks);
         sender.sendMessage("CullPlayers: " + plugin.cullPlayers);
+        sender.sendMessage("SneakCull: " + plugin.sneakCull);
         sender.sendMessage("RecheckInterval: " + plugin.recheckInterval);
         return true;
     }

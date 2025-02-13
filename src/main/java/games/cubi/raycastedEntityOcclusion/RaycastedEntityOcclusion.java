@@ -60,6 +60,13 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         if (recheckInterval == 20) config.set("RecheckInterval", 20);
 
 
+        if (config.contains("OccludePlayers")) {
+            getLogger().warning("The config option 'OccludePlayers' is outdated and has been replaced with 'CullPlayers'. The value has been automatically converted.");
+            cullPlayers = config.getBoolean("OccludePlayers");
+            config.set("CullPlayers", cullPlayers);
+            config.set("OccludePlayers", null);
+        }
+
         getLogger().info("AlwaysShowRadius: " + alwaysShowRadius);
         getLogger().info("RaycastRadius: " + raycastRadius);
         getLogger().info("SearchRadius: " + searchRadius);
