@@ -41,32 +41,40 @@ public class Raycast {
     public interface RaycastCallback {
         void onResult(boolean canSeePlayer);
     }
+    public interface RaycastCallbackLocation {
+        void onResult(Location location);
+    }
     private static boolean isOccluding(Material material) {
         return material.isOccluding();
     }
 
-    public static boolean syncRaycast(Location start, Location end, RaycastedEntityOcclusion plugin) {
-        Vector direction = end.toVector().subtract(start.toVector()).normalize();
-        double distance = start.distance(end);
+    public static void asyncRaycastWithLocationReturn(Location start, Location end, RaycastedEntityOcclusion plugin, RaycastCallbackLocation callbackLocation) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Vector direction = end.toVector().subtract(start.toVector()).normalize();
+                double distance = start.distance(end);
 
 
-        // Perform the ray trace
-        RayTraceResult result = start.getWorld().rayTraceBlocks(start, direction, distance,
-                FluidCollisionMode.NEVER, // Ignore fluids
-                true, // Pass through transparent blocks
-                // Check if the block is occluding
-                (block) -> isOccluding(block.getType())
-        );
+                // Perform the ray trace
+                RayTraceResult result = start.getWorld().rayTraceBlocks(start, direction, distance,
+                        FluidCollisionMode.NEVER, // Ignore fluids
+                        true, // Pass through transparent blocks
+                        // Check if the block is occluding
+                        (block) -> isOccluding(block.getType())
+                );
 
-        // Check if the ray hit a solid block or reached the player
-        if (result == null || result.getHitBlock() == null) {
-            // No solid block was hit, so the ray reached the player
-            return true;
-        } else {
-            // A solid block was hit
-            return false;
-            //plugin.getLogger().info("Raycast hit a solid block: " + result.getHitBlock().getType() + " at " + result.getHitBlock().getLocation());
+                // Check if the ray hit a solid block or reached the player
+                if (result == null || result.getHitBlock() == null) {
+                    // No solid block was hit, so the ray reached the player
+                    callbackLocation.onResult(null);
+                } else {
+                    // A solid block was hit
+                    callbackLocation.onResult(result.getHitBlock().getLocation());
+                    //plugin.getLogger().info("Raycast hit a solid block: " + result.getHitBlock().getType() + " at " + result.getHitBlock().getLocation());
 
-        }
+                }
+            }
+        }.runTaskAsynchronously(plugin);
     }
 }

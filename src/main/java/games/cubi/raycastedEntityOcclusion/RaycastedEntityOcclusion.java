@@ -8,7 +8,7 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     public int alwaysShowRadius;
     public int raycastRadius;
     public int searchRadius;
-    public boolean moreChecks;
+    public int engineMode;
     public boolean cullPlayers;
     public int recheckInterval;
     public boolean sneakCull;
@@ -44,7 +44,7 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         alwaysShowRadius = config.getInt("AlwaysShowRadius", 4);
         raycastRadius = config.getInt("RaycastRadius", 48);
         searchRadius = config.getInt("SearchRadius", 48);
-        moreChecks = config.getBoolean("MoreChecks", false);
+        engineMode = config.getInt("EngineMode", 3);
         cullPlayers = config.getBoolean("CullPlayers", false);
         sneakCull = config.getBoolean("OnlyCullSneakingPlayers", false);
 
@@ -54,7 +54,7 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         if (alwaysShowRadius == 4) config.set("AlwaysShowRadius", 4);
         if (raycastRadius == 48) config.set("RaycastRadius", 48);
         if (searchRadius == 48) config.set("SearchRadius", 48);
-        if (!moreChecks) config.set("MoreChecks", false);
+        if (engineMode == 3) config.set("EngineMode", 3);
         if (!cullPlayers) config.set("CullPlayers", false);
         if (!sneakCull) config.set("OnlyCullSneakingPlayers", false);
         if (recheckInterval == 20) config.set("RecheckInterval", 20);
@@ -66,11 +66,16 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
             config.set("CullPlayers", cullPlayers);
             config.set("OccludePlayers", null);
         }
+        if (config.contains("moreChecks")) {
+            getLogger().warning("The config option 'MoreChecks' is outdated and has been replaced with 'EngineMode'. Two new engine modes were also added. The engine mode has been automatically set to 3.");
+            config.set("EngineMode", 3);
+            config.set("MoreChecks", null);
+        }
 
         getLogger().info("AlwaysShowRadius: " + alwaysShowRadius);
         getLogger().info("RaycastRadius: " + raycastRadius);
         getLogger().info("SearchRadius: " + searchRadius);
-        getLogger().info("MoreChecks: " + moreChecks);
+        getLogger().info("EngineMode: " + engineMode);
         getLogger().info("CullPlayers: " + cullPlayers);
         getLogger().info("OnlyCullSneakingPlayers: " + sneakCull);
         getLogger().info("RecheckInterval: " + recheckInterval);

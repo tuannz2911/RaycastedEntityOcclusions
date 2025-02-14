@@ -2,6 +2,7 @@ AlwaysShowRadius: 8
 RaycastRadius: 48
 SearchRadius: 48
 MoreChecks: false #This will enable more raycasts per mob, increasing performance hit but showing partially visible mobs
+EngineMode: 3
 CullPlayers: false #Enabling this will make the plugin cull hidden players alongside entities
 OnlyCullSneakingPlayers: false #Enabling this will make the plugin only cull hidden players that are sneaking. Note that CullPlayers must also be true.
 RecheckInterval: 20 #Time in ticks between rechecking visible mobs
