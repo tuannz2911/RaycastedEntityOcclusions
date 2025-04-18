@@ -14,6 +14,7 @@ public class SneakListener implements Listener {
     public SneakListener(RaycastedEntityOcclusion plugin) {
         this.plugin = plugin;
     }
+    /*
     @EventHandler
     public void onSneak(org.bukkit.event.player.PlayerToggleSneakEvent event) {
         if (plugin.sneakCull) {
@@ -25,8 +26,8 @@ public class SneakListener implements Listener {
                     .toList();
             for (Player nearbyPlayer : nearbyPlayers) {
                 if (nearbyPlayer == sneakingPlayer) continue;
-                CheckEntityVisibility.runCheck(plugin.engineMode, sneakingPlayer, nearbyPlayer, plugin);
+                plugin.getCheckEntityVisibility().runCheck(plugin.engineMode, sneakingPlayer, nearbyPlayer, plugin);
             }
         }
-    }
+    }*/
 }

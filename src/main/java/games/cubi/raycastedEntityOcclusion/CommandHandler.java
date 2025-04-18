@@ -1,10 +1,14 @@
 package games.cubi.raycastedEntityOcclusion;
 
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class CommandHandler implements CommandExecutor {
     RaycastedEntityOcclusion plugin;
@@ -20,6 +24,10 @@ public class CommandHandler implements CommandExecutor {
             plugin.getCheckEntityVisibility().updateConfigValues();
             if (!(sender == null)) sender.sendMessage("RaycastedEntityOcclusion config reloaded.");
             return true;
+        } else if (args.length != 0 && args[0].equalsIgnoreCase("test")) {
+            LivingEntity entity = (LivingEntity) sender;
+            List<Block> blocks = entity.getLineOfSight(null, plugin.raycastRadius);
+            sender.sendMessage(blocks.toString());
         }
         sender.sendMessage("RaycastedEntityOcclusion v" + plugin.getDescription().getVersion());
         sender.sendMessage("AlwaysShowRadius: " + plugin.alwaysShowRadius);

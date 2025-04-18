@@ -12,9 +12,13 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     public boolean cullPlayers;
     public int recheckInterval;
     public boolean sneakCull;
+    public boolean debugMode;
+    public int expireAfterTicks;
+    public int cleanupInterval;
     public RaycastedEntityOcclusion plugin = this;
     public CheckEntityVisibility checkEntityVisibility;
     public SneakListener sneakListener;
+    public BlockDataManager blockDataManager;
 
     @Override
     public void onEnable() {
@@ -25,6 +29,9 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
 
         checkEntityVisibility = new CheckEntityVisibility(plugin);
         sneakListener = new SneakListener(plugin);
+        blockDataManager = new BlockDataManager(plugin);
+
+        blockDataManager.start();
 
         getCommand("raycastedentityocclusion").setExecutor(new CommandHandler(plugin));
         getServer().getPluginManager().registerEvents(sneakListener, plugin);
@@ -32,7 +39,9 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+
+        blockDataManager.stop();
+
     }
 
 
@@ -50,7 +59,10 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
 
         recheckInterval = config.getInt("RecheckInterval", 20);
 
-        // This ensures that if the config is not set, it will be set to the default value
+        expireAfterTicks = config.getInt("BlockDataManager.ExpireAfterTicks", 2400);
+        cleanupInterval = config.getInt("BlockDataManager.CleanupInterval", 1200);
+
+        // This ensures that if the config is not set, it will be set to the default value. Yes, this is a dumb way to do it. Whatever, it works.
         if (alwaysShowRadius == 4) config.set("AlwaysShowRadius", 4);
         if (raycastRadius == 48) config.set("RaycastRadius", 48);
         if (searchRadius == 48) config.set("SearchRadius", 48);
@@ -58,6 +70,8 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         if (!cullPlayers) config.set("CullPlayers", false);
         if (!sneakCull) config.set("OnlyCullSneakingPlayers", false);
         if (recheckInterval == 20) config.set("RecheckInterval", 20);
+        if (expireAfterTicks == 2400) config.set("BlockDataManager.ExpireAfterTicks", 2400);
+        if (cleanupInterval == 1200) config.set("BlockDataManager.CleanupInterval", 1200);
 
 
         if (config.contains("OccludePlayers")) {
@@ -66,9 +80,9 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
             config.set("CullPlayers", cullPlayers);
             config.set("OccludePlayers", null);
         }
-        if (config.contains("moreChecks")) {
+        if (config.contains("MoreChecks")) {
             getLogger().warning("The config option 'MoreChecks' is outdated and has been replaced with 'EngineMode'. Two new engine modes were also added. The engine mode has been automatically set to 3.");
-            config.set("EngineMode", 3);
+            config.set("EngineMode", 1);
             config.set("MoreChecks", null);
         }
 
@@ -79,7 +93,10 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
         getLogger().info("CullPlayers: " + cullPlayers);
         getLogger().info("OnlyCullSneakingPlayers: " + sneakCull);
         getLogger().info("RecheckInterval: " + recheckInterval);
+        getLogger().info("ExpireAfterTicks: " + expireAfterTicks);
+        getLogger().info("CleanupInterval: " + cleanupInterval);
 
+        blockDataManager.reloadConfigOptions(expireAfterTicks, cleanupInterval);
         saveConfig();
     }
     public CheckEntityVisibility getCheckEntityVisibility() {
@@ -87,5 +104,8 @@ public final class RaycastedEntityOcclusion extends JavaPlugin {
     }
     public SneakListener getSneakListener() {
         return sneakListener;
+    }
+    public BlockDataManager getBlockDataManager() {
+        return blockDataManager;
     }
 }
