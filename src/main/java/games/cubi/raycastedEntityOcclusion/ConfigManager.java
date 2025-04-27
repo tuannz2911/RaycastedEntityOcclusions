@@ -1,0 +1,55 @@
+package games.cubi.raycastedEntityOcclusion;
+
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class ConfigManager {
+    private final JavaPlugin plugin;
+    public int snapshotRefreshInterval;
+    public int engineMode;
+    public int maxOccludingCount;
+    public boolean debugMode;
+    public int alwaysShowRadius;
+    public int raycastRadius;
+    public int searchRadius;
+    public boolean cullPlayers;
+    public boolean onlyCullSneakingPlayers;
+    public int recheckInterval;
+
+    public ConfigManager(JavaPlugin plugin) {
+        this.plugin = plugin;
+        load();
+    }
+
+    public void load() {
+        plugin.saveDefaultConfig();
+        plugin.reloadConfig();
+        FileConfiguration cfg = plugin.getConfig();
+
+        snapshotRefreshInterval = cfg.getInt("snapshot-refresh-interval", 60);
+        engineMode = cfg.getInt("engine-mode", 1);
+        maxOccludingCount = cfg.getInt("max-occluding-count", 3);
+        debugMode = cfg.getBoolean("debug-mode", false);
+
+        alwaysShowRadius = cfg.getInt("always-show-radius", 8);
+        raycastRadius = cfg.getInt("raycast-radius", 48);
+        searchRadius = cfg.getInt("search-radius", 48);
+        cullPlayers = cfg.getBoolean("cull-players", false);
+        onlyCullSneakingPlayers = cfg.getBoolean("only-cull-sneaking-players", false);
+        recheckInterval = cfg.getInt("recheck-interval", 20);
+
+        // Write defaults if missing
+        cfg.addDefault("snapshot-refresh-interval", 60);
+        cfg.addDefault("engine-mode", 1);
+        cfg.addDefault("max-occluding-count", 3);
+        cfg.addDefault("debug-mode", false);
+        cfg.addDefault("always-show-radius", 8);
+        cfg.addDefault("raycast-radius", 48);
+        cfg.addDefault("search-radius", 48);
+        cfg.addDefault("cull-players", false);
+        cfg.addDefault("only-cull-sneaking-players", false);
+        cfg.addDefault("recheck-interval", 20);
+        cfg.options().copyDefaults(true);
+        plugin.saveConfig();
+    }
+}
