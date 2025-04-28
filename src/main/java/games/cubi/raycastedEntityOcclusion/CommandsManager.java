@@ -78,7 +78,12 @@ public class CommandsManager {
                                 )
                         )
                 )
-
+                /*.then(Commands.literal("test")
+                        .executes(context -> {
+                            testCommand(context);
+                            return Command.SINGLE_SUCCESS;
+                        })
+                )*/
                 .build();
         return buildCommand;
     }
@@ -91,5 +96,12 @@ public class CommandsManager {
         sender.sendRichMessage("<green>/raycastedentityocclusions config-values <gray>- Shows all config values");
         sender.sendRichMessage("<green>/raycastedentityocclusions set <key> <value> <gray>- Sets a config value");
         return Command.SINGLE_SUCCESS;
+    }
+
+    private void testCommand(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+        sender.sendRichMessage("This is a test command for use in development. It does nothing on publicly released versions (unless I have forgotten to remove the tests).");
+
+        //sender.sendMessage(new UpdateChecker(plugin).hasNewUpdate());
     }
 }
