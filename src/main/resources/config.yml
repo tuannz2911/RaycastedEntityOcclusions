@@ -3,8 +3,8 @@ engine-mode: 1                     # 1 = straight-line; 2 = predictive
 max-occluding-count: 3             # blocks before blocking
 debug-mode: false                 # enable debug particles
 always-show-radius: 8             # radius to always show entities
-raycast-radius: 48                # beyond this, entities auto-hide
-search-radius: 48                 # search radius for entities
+raycast-radius: 82                # beyond this, entities auto-hide
+search-radius: 82                 # search radius for entities
 cull-players: false               # cull hidden players as well as other entities
 only-cull-sneaking-players: false # only cull sneaking players (requires cull-players)
 recheck-interval: 20              # ticks between forced rechecks for visible entities

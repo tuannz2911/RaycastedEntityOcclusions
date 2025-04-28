@@ -22,7 +22,8 @@ public class MovementTracker {
                     history.computeIfAbsent(p, k -> new ArrayDeque<>(5));
                     Deque<Location> dq = history.get(p);
                     if (dq.size() >= 5) dq.removeFirst();
-                    dq.addLast(p.getLocation().clone());
+
+                    dq.addLast(p.getEyeLocation().clone());
                 }
             }
         }.runTaskTimer(plugin, 1L, 1L);
@@ -40,7 +41,7 @@ public class MovementTracker {
         double dy = now.getY() - old.getY();
         double dz = now.getZ() - old.getZ();
         double speed = Math.sqrt(dx*dx + dy*dy + dz*dz) / 5.0;
-        if (speed < 0.01) return null;
-        return now.clone().add(dx, dy, dz);
+        if (speed < 0.1) return null;
+        return now.clone().add(dx*2, dy, dz*2);
     }
 }

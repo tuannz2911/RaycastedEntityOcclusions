@@ -15,6 +15,7 @@ public class ConfigManager {
     public boolean cullPlayers;
     public boolean onlyCullSneakingPlayers;
     public int recheckInterval;
+    public FileConfiguration cfg;
 
     public ConfigManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -24,7 +25,7 @@ public class ConfigManager {
     public void load() {
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
-        FileConfiguration cfg = plugin.getConfig();
+        cfg = plugin.getConfig();
 
         snapshotRefreshInterval = cfg.getInt("snapshot-refresh-interval", 60);
         engineMode = cfg.getInt("engine-mode", 1);
@@ -51,5 +52,36 @@ public class ConfigManager {
         cfg.addDefault("recheck-interval", 20);
         cfg.options().copyDefaults(true);
         plugin.saveConfig();
+    }
+
+    public int setConfigValue(String path, String rawValue) {
+        if (!cfg.contains(path)) return -1;
+        Object current = cfg.get(path);
+        Object parsed;
+        if (current instanceof Boolean) {
+            String lower = rawValue.toLowerCase();
+            if (!lower.equals("true") && !lower.equals("false")) return -1;
+            parsed = Boolean.parseBoolean(lower);
+        } else if (current instanceof Number) {
+            int intVal;
+            try {
+                intVal = Integer.parseInt(rawValue);
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+            if (intVal < 0 || intVal > 256) return 0;
+            parsed = intVal;
+        } else {
+            return -1;
+        }
+        cfg.set(path, parsed);
+        plugin.saveConfig();
+        load();
+        return 1;
+        /*
+        -1 = invalid input
+        0 = out of range
+        1 = success
+         */
     }
 }

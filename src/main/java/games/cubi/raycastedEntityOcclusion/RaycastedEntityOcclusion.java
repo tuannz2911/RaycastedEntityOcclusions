@@ -1,8 +1,13 @@
 package games.cubi.raycastedEntityOcclusion;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.command.Command;
+import org.bukkit.Particle;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -18,14 +23,30 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
     private ConfigManager cfg;
     private ChunkSnapshotManager snapMgr;
     private MovementTracker tracker;
+    private CommandsManager commands;
 
     @Override
     public void onEnable() {
         cfg = new ConfigManager(this);
         snapMgr = new ChunkSnapshotManager(this, cfg.snapshotRefreshInterval);
         tracker = new MovementTracker(this);
+        commands = new CommandsManager(this, cfg);
         getServer().getPluginManager().registerEvents(new SnapshotListener(snapMgr), this);
-        getCommand("raycastedentityocclusion").setExecutor(this);
+
+        //Brigadier API
+        LiteralCommandNode<CommandSourceStack> buildCommand = commands.registerCommand();
+
+        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+            commands.registrar().register(buildCommand);
+            //alias "reo"
+            commands.registrar().register(Commands.literal("reo")
+                    .requires(sender -> sender.getSender().hasPermission("raycastedentityocclusions.command"))
+                    .executes(context -> {
+                        new CommandsManager(this, cfg).helpCommand(context);
+                        return Command.SINGLE_SUCCESS;
+                    })
+                    .redirect(buildCommand).build());
+        });
 
         //bStats
         int pluginId = 24553;
@@ -39,18 +60,6 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
         }.runTaskTimer(this, 0L, 1L);
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!(sender instanceof Player)) return false;
-        Player p = (Player) sender;
-        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-            cfg.load();
-            p.sendMessage("[EntityOcclusion] Config reloaded.");
-            return true;
-        }
-        p.sendMessage("RaycastOcclusion; engine-mode=" + cfg.engineMode + ", Debug=" + cfg.debugMode);
-        return true;
-    }
 
     // --- helper to hold one ray job ---
     private static class RayJob {
@@ -115,19 +124,14 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
             List<RayResult> results = new ArrayList<>(jobs.size());
             for (RayJob job : jobs) {
                 // first cast from real eye
-                boolean vis = RaycastUtil.raycast(
-                        job.start, job.end,
-                        cfg.maxOccludingCount, /*debug=*/false,
-                        snapMgr, /*playerForParticles=*/null
-                );
+                boolean vis = RaycastUtil.raycast(job.start, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
 
                 // if that fails and we have a predEye, cast again from predicted
                 if (!vis && job.predictedStart != null) {
-                    vis = RaycastUtil.raycast(
-                            job.predictedStart, job.end,
-                            cfg.maxOccludingCount, /*debug=*/false,
-                            snapMgr, /*playerForParticles=*/null
-                    );
+                    if (cfg.debugMode) {
+                        job.predictedStart.getWorld().spawnParticle(Particle.DUST, job.predictedStart, 1, new Particle.DustOptions(org.bukkit.Color.BLUE,1f));
+                    }
+                    vis = RaycastUtil.raycast(job.predictedStart, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
                 }
 
                 results.add(new RayResult(job.playerId, job.entityId, vis));
