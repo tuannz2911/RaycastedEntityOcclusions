@@ -38,7 +38,7 @@ public class ChunkSnapshotManager {
                     }
                 }
             }
-        }.runTaskTimerAsynchronously(plugin, refreshIntervalSecs*20L, refreshIntervalSecs*20L);
+        }.runTaskTimer(plugin, refreshIntervalSecs*20L, refreshIntervalSecs*20L);
     }
 
     public void onChunkLoad(Chunk c) {
