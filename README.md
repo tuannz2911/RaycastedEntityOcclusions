@@ -1,4 +1,4 @@
-Latest version: v1.2.2
+Latest version: v1.4.1
 
 The latest version can currently only be found on Modrinth https://modrinth.com/plugin/raycasted-entity-occlusion/
 
@@ -12,6 +12,8 @@ Use cases:
   - Freecam will still be useful for locating structures and features such as caves
 - Reduce client lag
   - In servers with large megabases full of item frames, armour stands and other entities, RaycastedEntityOcclusion will prevent these entities from lagging the client unless they are within line-of-sight
+
+EVERYTHING BELOW IS OUT OF DATE, READ THE CHANGELOG FOR v1.4.1 https://modrinth.com/plugin/raycasted-entity-occlusions/version/1.4.1
 
 Default Config:
 
