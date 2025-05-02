@@ -1,5 +1,5 @@
-snapshot-refresh-interval: 60       # seconds between chunk snapshot refresh
-engine-mode: 1                     # 1 = straight-line; 2 = predictive
+snapshot-refresh-interval: 60       # seconds between chunk snapshot refresh, won't change without restart
+engine-mode: 1                     # 1 = straight-line; 2 = predictive and straight-line
 max-occluding-count: 3             # blocks before blocking
 debug-mode: false                 # enable debug particles
 always-show-radius: 8             # radius to always show entities
