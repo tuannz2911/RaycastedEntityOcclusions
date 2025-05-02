@@ -18,7 +18,7 @@ public class SnapshotListener implements Listener {
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent e) {
-        if (!e.isNewChunk()) manager.onChunkLoad(e.getChunk());
+        manager.onChunkLoad(e.getChunk());
     }
 
     @EventHandler
