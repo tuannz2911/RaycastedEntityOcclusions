@@ -1,6 +1,7 @@
 package games.cubi.raycastedEntityOcclusion;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.BlockData;
@@ -8,8 +9,11 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Engine {
+
+    public static ConcurrentHashMap<Location, Set<Player>> canSeeTileEntity = new ConcurrentHashMap<>();
 
     private static class RayJob {
         final UUID playerId, entityId;
@@ -118,12 +122,31 @@ public class Engine {
                         }
                     }
                     for (Location loc : tileEntities) {
+                        Set<Player> seen = canSeeTileEntity.get(loc);
+                        if (seen != null && seen.contains(p)) {
+                            if (cfg.tileEntityRecheckInterval == 0) continue;
+                            if (plugin.tick % (cfg.tileEntityRecheckInterval*20) != 0) continue;
+                        }
+
+                        if (snapMgr.getMaterialAt(loc).equals(Material.BEACON)) continue;
+
                         double distSquared = loc.distanceSquared(p.getLocation());
                         if (distSquared > cfg.searchRadius * cfg.searchRadius) hideTileEntity(p, loc);
                         if (distSquared < cfg.alwaysShowRadius * cfg.alwaysShowRadius) showTileEntity(p, loc);
 
                         boolean result = RaycastUtil.raycast(p.getEyeLocation(), loc, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
                         syncToggleTileEntity(p, loc, result, plugin);
+                        if (result) {
+                            canSeeTileEntity.computeIfAbsent(loc, k -> ConcurrentHashMap.newKeySet()).add(p);
+                        } else {
+                            Set<Player> seenPlayers = canSeeTileEntity.get(loc);
+                            if (seenPlayers != null) {
+                                seenPlayers.remove(p);
+                                if (seenPlayers.isEmpty()) {
+                                    canSeeTileEntity.remove(loc);
+                                }
+                            }
+                        }
                     }
                 });
             }
@@ -142,8 +165,10 @@ public class Engine {
         p.sendBlockChange(location, fake);
     }
     public static void showTileEntity(Player p, Location location) {
-        BlockData data = location.getBlock().getBlockData();
+        Block block = location.getBlock();
+        BlockData data = block.getBlockData();
         p.sendBlockChange(location, data);
+
     }
     public static void syncToggleTileEntity(Player p, Location loc, boolean bool, RaycastedEntityOcclusion plugin) {
         Bukkit.getScheduler().runTask(plugin, () -> {

@@ -16,6 +16,7 @@ public class ConfigManager {
     public boolean onlyCullSneakingPlayers;
     public int recheckInterval;
     public boolean checkTileEntities;
+    public int tileEntityRecheckInterval;
     public FileConfiguration cfg;
 
     public ConfigManager(JavaPlugin plugin) {
@@ -41,6 +42,7 @@ public class ConfigManager {
         recheckInterval = cfg.getInt("recheck-interval", 20);
 
         checkTileEntities = cfg.getBoolean("check-tile-entities", false);
+        tileEntityRecheckInterval = cfg.getInt("tile-entity-recheck-interval", 0);
 
         // Write defaults if missing
         cfg.addDefault("snapshot-refresh-interval", 60);
@@ -54,6 +56,7 @@ public class ConfigManager {
         cfg.addDefault("only-cull-sneaking-players", false);
         cfg.addDefault("recheck-interval", 20);
         cfg.addDefault("check-tile-entities", false);
+        cfg.addDefault("tile-entity-recheck-interval", 0);
         cfg.options().copyDefaults(true);
         plugin.saveConfig();
     }
