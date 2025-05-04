@@ -29,7 +29,7 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
     @Override
     public void onEnable() {
         cfg = new ConfigManager(this);
-        snapMgr = new ChunkSnapshotManager(this, cfg.snapshotRefreshInterval);
+        snapMgr = new ChunkSnapshotManager(this);
         tracker = new MovementTracker(this);
         commands = new CommandsManager(this, cfg);
         getServer().getPluginManager().registerEvents(new SnapshotListener(snapMgr), this);
@@ -58,6 +58,7 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
             public void run() {
                 tick++;
                 Engine.runEngine(cfg, snapMgr, tracker, RaycastedEntityOcclusion.this);
+                Engine.runTileEngine(cfg, snapMgr, tracker, RaycastedEntityOcclusion.this);
             }
         }.runTaskTimer(this, 0L, 1L);
     }

@@ -1,14 +1,13 @@
 package games.cubi.raycastedEntityOcclusion;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Particle;
+import org.bukkit.*;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.TileState;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Engine {
 
@@ -64,8 +63,7 @@ public class Engine {
                     p.hideEntity(plugin, e);
                 } else if (p.canSee(e) && plugin.tick % cfg.recheckInterval != 0) {
                     // player can see entity, no need to raycast
-                }
-                else {
+                } else {
                     // schedule for async raycast (with or without predEye)
                     jobs.add(new RayJob(p.getUniqueId(), e.getUniqueId(), eye, predEye, target));
                 }
@@ -82,7 +80,7 @@ public class Engine {
                 // if that fails and we have a predEye, cast again from predicted
                 if (!vis && job.predictedStart != null) {
                     if (cfg.debugMode) {
-                        job.predictedStart.getWorld().spawnParticle(Particle.DUST, job.predictedStart, 1, new Particle.DustOptions(org.bukkit.Color.BLUE,1f));
+                        job.predictedStart.getWorld().spawnParticle(Particle.DUST, job.predictedStart, 1, new Particle.DustOptions(Color.BLUE, 1f));
                     }
                     vis = RaycastUtil.raycast(job.predictedStart, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
                 }
@@ -102,5 +100,61 @@ public class Engine {
                 }
             });
         });
+
+    }
+
+    public static void runTileEngine(ConfigManager cfg, ChunkSnapshotManager snapMgr, MovementTracker tracker, RaycastedEntityOcclusion plugin) {
+        if (cfg.checkTileEntities) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p.hasPermission("raycastedentityocclusions.bypass")) continue;
+                String world = p.getWorld().getName();
+                //async run with the world passed in
+                Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                    int chunksRadius = (cfg.searchRadius + 15) / 16;
+                    HashSet<Location> tileEntities = new HashSet<>();
+                    for (int x = -chunksRadius; x <= chunksRadius; x++) {
+                        for (int z = -chunksRadius; z <= chunksRadius; z++) {
+                            tileEntities.addAll(snapMgr.getTileEntitiesInChunk(world, x, z));
+                        }
+                    }
+                    for (Location loc : tileEntities) {
+                        double distSquared = loc.distanceSquared(p.getLocation());
+                        if (distSquared > cfg.searchRadius * cfg.searchRadius) hideTileEntity(p, loc);
+                        if (distSquared < cfg.alwaysShowRadius * cfg.alwaysShowRadius) showTileEntity(p, loc);
+
+                        boolean result = RaycastUtil.raycast(p.getEyeLocation(), loc, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
+                        syncToggleTileEntity(p, loc, result, plugin);
+                    }
+                });
+            }
+        }
+    }
+
+    public static void hideTileEntity(Player p, Location location) {
+        if (p.hasPermission("raycastedentityocclusions.bypass")) return;
+        BlockData fake;
+        if (location.getBlockY() < 0) {
+            fake = Material.DEEPSLATE.createBlockData();
+        }
+        else {
+            fake = Material.STONE.createBlockData();
+        }
+        p.sendBlockChange(location, fake);
+    }
+    public static void showTileEntity(Player p, Location location) {
+        BlockData data = location.getBlock().getBlockData();
+        p.sendBlockChange(location, data);
+    }
+    public static void syncToggleTileEntity(Player p, Location loc, boolean bool, RaycastedEntityOcclusion plugin) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (bool) {
+                showTileEntity(p, loc);
+            } else {
+                hideTileEntity(p, loc);
+            }
+        });
     }
 }
+
+/*
+ */
