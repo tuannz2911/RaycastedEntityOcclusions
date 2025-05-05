@@ -1,6 +1,6 @@
 Latest version: v1.5.0
 
-The latest version can currently only be found on Modrinth https://modrinth.com/plugin/raycasted-entity-occlusion/
+The latest version can currently only be found on Modrinth https://modrinth.com/plugin/raycasted-entity-occlusions/
 
 This is a simple server-side plugin for PaperMC (May also work with Spigot, this is untested) that hides/culls entities from players if they do not have line-of-sight. All raycasts are run async to reduce performance impact.
 Use cases:
