@@ -1,8 +1,16 @@
 package games.cubi.raycastedEntityOcclusion;
 
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.kyori.adventure.audience.Audience;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,78 +19,80 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.concurrent.CompletableFuture;
 
 
-public class UpdateChecker {
-    /*private final RaycastedEntityOcclusion plugin;
+public class UpdateChecker implements org.bukkit.event.Listener {
+    private final RaycastedEntityOcclusion plugin;
 
     public UpdateChecker(RaycastedEntityOcclusion plugin) {
         this.plugin = plugin;
-        checkForUpdates();
+        checkForUpdates(plugin, Bukkit.getConsoleSender());
     }
 
     public void checkForUpdates() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            if (hasNewUpdate() != null) {
-                plugin.getLogger().info("A new version of RaycastedEntityOcclusions is available! ");
-                plugin.getLogger().info("Please update to the latest version for the best experience.");
-            } else {
-                plugin.getLogger().info("You are using the latest version of RaycastedEntityOcclusions.");
-            }
-        });
     }
 
-    public String hasNewUpdate() {
-        try {
-            String versionUrl = "https://example.com/version.txt";
-            URL url = new URI(versionUrl).toURL();
-            URLConnection conn = url.openConnection();
-            conn.setConnectTimeout(500); // 5s connect timeout
-            conn.setReadTimeout(500);    // 5s read timeout
+    public static CompletableFuture<String> fetchFeaturedVersion(RaycastedEntityOcclusion plugin) {
+        CompletableFuture<String> future = new CompletableFuture<>();
 
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(conn.getInputStream()))) {
-                String version = reader.readLine();
-                if (version == null) {
-                    plugin.getLogger().warning("Could not check for updates: version is null");
-                    return null;
-                }
-                String currentVersion = plugin.getDescription().getVersion();
-                if (!currentVersion.equals(version)) {
-                    return version;
-                }
-                return null;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 
+            final String url = "https://api.modrinth.com/v2/project/raycasted-entity-occlusions/version?featured=true";
+            try (final InputStreamReader reader = new InputStreamReader(new URL(url).openConnection().getInputStream())) {
+                final JsonArray array = new JsonArray();
+                array.add(new BufferedReader(reader).readLine());
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < array.size(); i++) {
+                    /*
+                    final JsonObject object = array.get(i).getAsJsonObject();
+                    if (object.get("version_type").getAsString().equals("release")) {
+                        future.complete(object.get("version_number").getAsString());
+                    }*/
+                    sb.append(array.get(i).getAsString());
+                }
+                String apiData = sb.toString();
+                JsonArray jsonArray = JsonParser.parseString(apiData).getAsJsonArray();
+                JsonObject firstObject = jsonArray.get(0).getAsJsonObject();
+                String versionNumber = firstObject.get("version_number").getAsString();
+
+                future.complete(versionNumber);
+
+                //future.completeExceptionally(new IllegalStateException("No versions found"));
+            } catch (IOException e) {
+                future.completeExceptionally(new IllegalStateException("Unable to fetch latest version", e));
             }
-            catch (Exception e) {
-                plugin.getLogger().warning("Could not check for updates: " + e.getMessage());
-                return null;
-            }
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not check for updates: " + e.getMessage());
-            return null;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        });
+        return future;
     }
 
     //on join
     @EventHandler
     public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
         if (event.getPlayer().hasPermission("raycastedentityocclusions.updatecheck")) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                String newVersion = hasNewUpdate();
-                if (newVersion != null) {
-                    event.getPlayer().sendRichMessage("<#FF00FF>A new version of <green>RaycastedEntityOcclusions<#FF00FF> is available! \n" +
-                            "\n" +
-                            "<white>Please update to the latest version for the best experience.\n" +
-                            "\n" +
-                            "<blue><aqua><u><click:open_url:'https://modrinth.com/plugin/raycasted-entity-occlusions/versions'>Click here to download</click></u></aqua></blue>");
-                } else {
-                    event.getPlayer().sendMessage("<green>You are using the latest version of RaycastedEntityOcclusions.");
-                }
-            });
+            Player sender = event.getPlayer();
+            checkForUpdates(plugin, sender);
         }
     }
-*/
+    public static void checkForUpdates(RaycastedEntityOcclusion plugin, CommandSender audience) {
+        fetchFeaturedVersion(plugin).thenAccept(version -> {
+            // This runs asynchronously when the version is fetched
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (plugin.getDescription().getVersion().equals(version)) {
+                    audience.sendRichMessage("<green>You are using the latest version of Raycasted Entity Occlusions.");
+                } else {
+                    audience.sendRichMessage("<red>You are not using the latest version of Raycasted Entity Occlusions. Please update to <green>" + version);
+                }
+            });
+        }).exceptionally(ex -> {
+            // Handle error (e.g., log the exception)
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                plugin.getLogger().warning("Failed to fetch version: " + ex.getMessage());
+            });
+            return null;
+        });
+    }
 }
