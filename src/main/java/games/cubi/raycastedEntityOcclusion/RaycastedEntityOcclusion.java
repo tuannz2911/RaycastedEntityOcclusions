@@ -33,6 +33,7 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
         tracker = new MovementTracker(this);
         commands = new CommandsManager(this, cfg);
         getServer().getPluginManager().registerEvents(new SnapshotListener(snapMgr), this);
+        getServer().getPluginManager().registerEvents(new UpdateChecker(this), this);
 
         //Brigadier API
         LiteralCommandNode<CommandSourceStack> buildCommand = commands.registerCommand();
