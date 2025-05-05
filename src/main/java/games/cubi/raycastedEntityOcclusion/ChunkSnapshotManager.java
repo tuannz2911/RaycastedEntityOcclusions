@@ -126,7 +126,7 @@ public class ChunkSnapshotManager {
         Data d = dataMap.get(key(loc.getChunk()));
         if (d == null) {
             Chunk c = loc.getChunk();
-            dataMap.put(key(c), takeSnapshot(c, System.currentTimeMillis()));
+            //dataMap.put(key(c), takeSnapshot(c, System.currentTimeMillis())); infinite loop
             System.err.println("ChunkSnapshotManager: No snapshot for " + loc.getChunk()+ " Please report this on our discord (discord.cubi.games)'");
             return loc.getBlock().getType();
         }

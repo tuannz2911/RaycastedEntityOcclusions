@@ -135,6 +135,15 @@ public class Engine {
                         if (distSquared < cfg.alwaysShowRadius * cfg.alwaysShowRadius) showTileEntity(p, loc);
 
                         boolean result = RaycastUtil.raycast(p.getEyeLocation(), loc, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
+                        if (cfg.engineMode == 2) {
+                            Location predEye = tracker.getPredictedLocation(p);
+                            if (predEye != null) {
+                                boolean result2 = RaycastUtil.raycast(predEye, loc, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
+                                if (result2) {
+                                    result = true;
+                                }
+                            }
+                        }
                         syncToggleTileEntity(p, loc, result, plugin);
                         if (result) {
                             canSeeTileEntity.computeIfAbsent(loc, k -> ConcurrentHashMap.newKeySet()).add(p);
