@@ -1,4 +1,4 @@
-Latest version: v1.4.1
+Latest version: v1.5.0
 
 The latest version can currently only be found on Modrinth https://modrinth.com/plugin/raycasted-entity-occlusion/
 
