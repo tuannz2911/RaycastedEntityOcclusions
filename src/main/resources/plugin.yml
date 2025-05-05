@@ -4,6 +4,7 @@ main: games.cubi.raycastedEntityOcclusion.RaycastedEntityOcclusion
 api-version: '1.21'
 prefix: EntityOcclusions
 authors: [ _Cubicake ]
+load: STARTUP
 website: https://cubi.games
 permissions:
     raycastedentityocclusions.command:
