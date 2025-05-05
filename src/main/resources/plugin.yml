@@ -13,3 +13,6 @@ permissions:
     raycastedentityocclusions.bypass:
         description: Permission to bypass all checks
         default: false
+    raycastedentityocclusions.updatecheck:
+        description: Permission to check for plugin updates
+        default: op
