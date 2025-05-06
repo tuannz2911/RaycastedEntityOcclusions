@@ -112,12 +112,15 @@ public class Engine {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (p.hasPermission("raycastedentityocclusions.bypass")) continue;
                 String world = p.getWorld().getName();
-                //async run with the world passed in
+                //get player's chunk location
+                int chunkX = p.getLocation().getBlockX() >> 4;
+                int chunkZ = p.getLocation().getBlockZ() >> 4;
+                //async run with vars passed in
                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                     int chunksRadius = (cfg.searchRadius + 15) / 16;
                     HashSet<Location> tileEntities = new HashSet<>();
-                    for (int x = -chunksRadius; x <= chunksRadius; x++) {
-                        for (int z = -chunksRadius; z <= chunksRadius; z++) {
+                    for (int x = (-chunksRadius/2)+chunkX; x <= chunksRadius+chunkX; x++) {
+                        for (int z = (-chunksRadius/2)+chunkZ; z <= chunksRadius+chunkZ; z++) {
                             tileEntities.addAll(snapMgr.getTileEntitiesInChunk(world, x, z));
                         }
                     }

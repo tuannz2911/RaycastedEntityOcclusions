@@ -84,7 +84,7 @@ public class ChunkSnapshotManager {
             if (cfg.checkTileEntities) {
                 // Check if the block is a tile entity
                 BlockState data = loc.getBlock().getState();
-                loc = loc.clone().add(0.5, 0, 0.5);
+                loc = loc.clone().add(0.5, 0.5, 0.5);
                 if (data instanceof TileState) {
                     if (cfg.debugMode){
                         Bukkit.getLogger().info("ChunkSnapshotManager: Tile entity at " + loc);
@@ -109,7 +109,7 @@ public class ChunkSnapshotManager {
                             BlockState bs = data.snapshot.getBlockData(x, y, z).createBlockState();
 
                             if (bs instanceof TileState) {
-                                data.tileEntities.add(new Location(w, x+ chunkX +0.5, y, z + chunkZ+0.5));
+                                data.tileEntities.add(new Location(w, x+ chunkX +0.5, y+0.5, z + chunkZ+0.5));
                             }
                     }
                 }
