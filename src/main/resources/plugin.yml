@@ -16,3 +16,5 @@ permissions:
     raycastedentityocclusions.updatecheck:
         description: Permission to check for plugin updates
         default: op
+softdepend:
+    - packetevents

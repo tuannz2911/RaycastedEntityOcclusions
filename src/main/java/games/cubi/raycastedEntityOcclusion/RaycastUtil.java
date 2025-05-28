@@ -24,6 +24,9 @@ public class RaycastUtil {
             curr.add(dir);
             traveled += 1;
             Material mat = snap.getMaterialAt(curr);
+            if (mat == null) {
+                continue;
+            }
             //System.out.println(curr + " " + mat);
             if (mat.isOccluding()) {
                 maxOccluding--;

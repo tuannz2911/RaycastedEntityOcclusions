@@ -18,6 +18,7 @@ public class ConfigManager {
     public boolean checkTileEntities;
     public int tileEntityRecheckInterval;
     public FileConfiguration cfg;
+    public boolean packetEventsPresent = false;
 
     public ConfigManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -90,5 +91,9 @@ public class ConfigManager {
         0 = out of range
         1 = success
          */
+    }
+    public void setPacketEventsPresent(boolean present) {
+        this.packetEventsPresent = present;
+        plugin.getLogger().info("PacketEvents detected: " + present);
     }
 }

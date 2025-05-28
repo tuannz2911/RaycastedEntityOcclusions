@@ -1,5 +1,6 @@
 package games.cubi.raycastedEntityOcclusion;
 
+
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -16,12 +17,13 @@ public class Engine {
     public static ConcurrentHashMap<Location, Set<Player>> canSeeTileEntity = new ConcurrentHashMap<>();
 
     private static class RayJob {
-        final UUID playerId, entityId;
+        final Player player;
+        final Entity target;
         final Location start, predictedStart, end;
 
-        RayJob(UUID p, UUID e, Location s, Location pred, Location t) {
-            playerId = p;
-            entityId = e;
+        RayJob(Player p, Entity e, Location s, Location pred, Location t) {
+            player = p;
+            target = e;
             start = s;
             predictedStart = pred;
             end = t;
@@ -29,12 +31,13 @@ public class Engine {
     }
 
     private static class RayResult {
-        final UUID playerId, entityId;
+        final Player player;
+        final Entity target;
         final boolean visible;
 
-        RayResult(UUID p, UUID e, boolean v) {
-            playerId = p;
-            entityId = e;
+        RayResult(Player p, Entity e, boolean v) {
+            player = p;
+            target = e;
             visible = v;
         }
     }
@@ -69,7 +72,7 @@ public class Engine {
                     // player can see entity, no need to raycast
                 } else {
                     // schedule for async raycast (with or without predEye)
-                    jobs.add(new RayJob(p.getUniqueId(), e.getUniqueId(), eye, predEye, target));
+                    jobs.add(new RayJob(p, e, eye, predEye, target));
                 }
             }
         }
@@ -78,6 +81,10 @@ public class Engine {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             List<RayResult> results = new ArrayList<>(jobs.size());
             for (RayJob job : jobs) {
+                // if the player is not in the same world as the target, skip
+                if (!job.player.getWorld().equals(job.target.getWorld())) {
+                    continue;
+                }
                 // first cast from real eye
                 boolean vis = RaycastUtil.raycast(job.start, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
 
@@ -89,17 +96,26 @@ public class Engine {
                     vis = RaycastUtil.raycast(job.predictedStart, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
                 }
 
-                results.add(new RayResult(job.playerId, job.entityId, vis));
+                results.add(new RayResult(job.player, job.target, vis));
             }
 
             // ----- PHASE 3: SYNC APPLY -----
             Bukkit.getScheduler().runTask(plugin, () -> {
                 for (RayResult r : results) {
-                    Player p = Bukkit.getPlayer(r.playerId);
-                    Entity ent = Bukkit.getEntity(r.entityId);
+                    Player p = r.player;
+                    Entity ent = r.target;
                     if (p != null && ent != null) {
+                        boolean currentState = p.canSee(ent);
+                        if (currentState == r.visible) continue;
                         if (r.visible) p.showEntity(plugin, ent);
-                        else p.hideEntity(plugin, ent);
+                        else {
+                            p.hideEntity(plugin, ent);
+                            if (ent instanceof Player other && cfg.packetEventsPresent) {
+                                plugin.getLogger().info("Hiding player " + other.getName() + " from player " + p.getName());
+                                PacketEvents.showTabName(p, other);
+                                // Different file so that packetevents stuff is only imported if present
+                            }
+                        }
                     }
                 }
             });

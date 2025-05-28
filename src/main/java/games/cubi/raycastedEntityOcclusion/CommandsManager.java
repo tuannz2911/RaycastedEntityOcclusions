@@ -10,6 +10,9 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
+
+import java.util.Set;
 
 public class CommandsManager {
     private final RaycastedEntityOcclusion plugin;
@@ -78,13 +81,13 @@ public class CommandsManager {
                                         })
                                 )
                         )
-                )/*
+                )
                 .then(Commands.literal("test")
                         .executes(context -> {
                             testCommand(context);
                             return Command.SINGLE_SUCCESS;
                         })
-                )*/
+                )
                 .then(Commands.literal("check-for-updates")
                         .executes(context -> {
                             CommandSender sender = context.getSource().getSender();
@@ -111,6 +114,6 @@ public class CommandsManager {
         sender.sendRichMessage("This is a test command for use in development. It does nothing on publicly released versions (unless I have forgotten to remove the tests).");
 
         //sender.sendMessage(new UpdateChecker(plugin).hasNewUpdate());
-        UpdateChecker.checkForUpdates(plugin, sender);
+        sender.sendMessage(Bukkit.getServer().getVersion());
     }
 }
