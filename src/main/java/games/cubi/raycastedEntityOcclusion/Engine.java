@@ -44,65 +44,72 @@ public class Engine {
         List<RayJob> jobs = new ArrayList<>();
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (p.hasPermission("raycastedentityocclusions.bypass")) continue;
-            Location eye = p.getEyeLocation().clone();
-            Location predEye = null;
-            if (cfg.engineMode == 2) {
-                // getPredictedLocation returns null if insufficient data or too slow
-                predEye = tracker.getPredictedLocation(p);
-            }
-
-            for (Entity e : p.getNearbyEntities(cfg.searchRadius, cfg.searchRadius, cfg.searchRadius)) {
-                if (e == p) continue;
-                // Cull-players logic
-                if (e instanceof Player pl && (!cfg.cullPlayers || (cfg.onlyCullSneakingPlayers && !pl.isSneaking()))) {
-                    p.showEntity(plugin, e);
-                    continue;
+            RaycastedEntityOcclusion.getScheduler().runTask(p, () -> {
+                Location eye = p.getEyeLocation().clone();
+                Location predEye = null;
+                if (cfg.engineMode == 2) {
+                    // getPredictedLocation returns null if insufficient data or too slow
+                    predEye = tracker.getPredictedLocation(p);
                 }
 
-                Location target = e.getLocation().add(0, e.getHeight() / 2, 0).clone();
-                double dist = eye.distance(target);
-                if (dist <= cfg.alwaysShowRadius) {
-                    p.showEntity(plugin, e);
-                } else if (dist > cfg.raycastRadius) {
-                    p.hideEntity(plugin, e);
-                } else if (p.canSee(e) && plugin.tick % cfg.recheckInterval != 0) {
-                    // player can see entity, no need to raycast
-                } else {
-                    // schedule for async raycast (with or without predEye)
-                    jobs.add(new RayJob(p.getUniqueId(), e.getUniqueId(), eye, predEye, target));
-                }
-            }
-        }
-
-        // ----- PHASE 2: ASYNC RAYCASTS -----
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            List<RayResult> results = new ArrayList<>(jobs.size());
-            for (RayJob job : jobs) {
-                // first cast from real eye
-                boolean vis = RaycastUtil.raycast(job.start, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
-
-                // if that fails and we have a predEye, cast again from predicted
-                if (!vis && job.predictedStart != null) {
-                    if (cfg.debugMode) {
-                        job.predictedStart.getWorld().spawnParticle(Particle.DUST, job.predictedStart, 1, new Particle.DustOptions(Color.BLUE, 1f));
+                for (Entity e : p.getNearbyEntities(cfg.searchRadius, cfg.searchRadius, cfg.searchRadius)) {
+                    if (e == p) continue;
+                    // Cull-players logic
+                    if (e instanceof Player pl && (!cfg.cullPlayers || (cfg.onlyCullSneakingPlayers && !pl.isSneaking()))) {
+                        p.showEntity(plugin, e);
+                        continue;
                     }
-                    vis = RaycastUtil.raycast(job.predictedStart, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
-                }
 
-                results.add(new RayResult(job.playerId, job.entityId, vis));
-            }
-
-            // ----- PHASE 3: SYNC APPLY -----
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                for (RayResult r : results) {
-                    Player p = Bukkit.getPlayer(r.playerId);
-                    Entity ent = Bukkit.getEntity(r.entityId);
-                    if (p != null && ent != null) {
-                        if (r.visible) p.showEntity(plugin, ent);
-                        else p.hideEntity(plugin, ent);
+                    Location target = e.getLocation().add(0, e.getHeight() / 2, 0).clone();
+                    double dist = eye.distance(target);
+                    if (dist <= cfg.alwaysShowRadius) {
+                        p.showEntity(plugin, e);
+                    } else if (dist > cfg.raycastRadius) {
+                        p.hideEntity(plugin, e);
+                    } else if (p.canSee(e) && plugin.tick % cfg.recheckInterval != 0) {
+                        // player can see entity, no need to raycast
+                    } else {
+                        // schedule for async raycast (with or without predEye)
+                        jobs.add(new RayJob(p.getUniqueId(), e.getUniqueId(), eye, predEye, target));
                     }
                 }
             });
+        }
+
+        // ----- PHASE 2: ASYNC RAYCASTS -----
+        RaycastedEntityOcclusion.getScheduler().runTaskAsynchronously(plugin, () -> {
+            List<RayResult> results = new ArrayList<>(jobs.size());
+            for (RayJob job : jobs) {
+                
+                Location startLoc = job.predictedStart != null ? job.predictedStart : job.start;
+                
+                RaycastedEntityOcclusion.getScheduler().runTask(startLoc, () -> {
+                    // first cast from real eye
+                    boolean vis = RaycastUtil.raycast(job.start, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
+
+                    // if that fails and we have a predEye, cast again from predicted
+                    if (!vis && job.predictedStart != null) {
+                        if (cfg.debugMode) {
+                            job.predictedStart.getWorld().spawnParticle(Particle.DUST, job.predictedStart, 1, new Particle.DustOptions(Color.BLUE, 1f));
+                        }
+                        vis = RaycastUtil.raycast(job.predictedStart, job.end, cfg.maxOccludingCount, cfg.debugMode, snapMgr);
+                    }
+
+                    results.add(new RayResult(job.playerId, job.entityId, vis));
+                });
+            }
+
+            // ----- PHASE 3: SYNC APPLY -----
+            for (RayResult r : results) {
+                Player p = Bukkit.getPlayer(r.playerId);
+                Entity ent = Bukkit.getEntity(r.entityId);
+                if (p != null && ent != null) {
+                    RaycastedEntityOcclusion.getScheduler().runTask(p, () -> {
+                        if (r.visible) p.showEntity(plugin, ent);
+                        else p.hideEntity(plugin, ent);
+                    });
+                }
+            }
         });
 
     }
@@ -113,7 +120,7 @@ public class Engine {
                 if (p.hasPermission("raycastedentityocclusions.bypass")) continue;
                 String world = p.getWorld().getName();
                 //async run with the world passed in
-                Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                RaycastedEntityOcclusion.getScheduler().runTask(p, () -> {
                     int chunksRadius = (cfg.searchRadius + 15) / 16;
                     HashSet<Location> tileEntities = new HashSet<>();
                     for (int x = -chunksRadius; x <= chunksRadius; x++) {
@@ -127,7 +134,7 @@ public class Engine {
                             if (cfg.tileEntityRecheckInterval == 0) continue;
                             if (plugin.tick % (cfg.tileEntityRecheckInterval*20) != 0) continue;
                         }
-
+                        
                         if (snapMgr.getMaterialAt(loc).equals(Material.BEACON)) continue;
 
                         double distSquared = loc.distanceSquared(p.getLocation());
@@ -180,7 +187,7 @@ public class Engine {
 
     }
     public static void syncToggleTileEntity(Player p, Location loc, boolean bool, RaycastedEntityOcclusion plugin) {
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        RaycastedEntityOcclusion.getScheduler().runTask(p, () -> {
             if (bool) {
                 showTileEntity(p, loc);
             } else {

@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import com.github.Anon8281.universalScheduler.UniversalRunnable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -15,15 +15,17 @@ public class MovementTracker {
     private final Map<Player, Deque<Location>> history = new ConcurrentHashMap<>();
 
     public MovementTracker(Plugin plugin) {
-        new BukkitRunnable() {
+        new UniversalRunnable() {
             @Override
             public void run() {
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    history.computeIfAbsent(p, k -> new ArrayDeque<>(5));
-                    Deque<Location> dq = history.get(p);
-                    if (dq.size() >= 5) dq.removeFirst();
+                    RaycastedEntityOcclusion.getScheduler().runTask(p, () -> {
+                        history.computeIfAbsent(p, k -> new ArrayDeque<>(5));
+                        Deque<Location> dq = history.get(p);
+                        if (dq.size() >= 5) dq.removeFirst();
 
-                    dq.addLast(p.getEyeLocation().clone());
+                        dq.addLast(p.getEyeLocation().clone());
+                    });
                 }
             }
         }.runTaskTimer(plugin, 1L, 1L);

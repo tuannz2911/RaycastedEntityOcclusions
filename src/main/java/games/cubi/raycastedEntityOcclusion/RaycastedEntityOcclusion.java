@@ -12,7 +12,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import com.github.Anon8281.universalScheduler.UniversalScheduler;
+import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
+import com.github.Anon8281.universalScheduler.UniversalRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +25,13 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
     private ChunkSnapshotManager snapMgr;
     private MovementTracker tracker;
     private CommandsManager commands;
+    private static TaskScheduler scheduler;
 
     public int tick = 0;
 
     @Override
     public void onEnable() {
+        scheduler = UniversalScheduler.getScheduler(this);
         cfg = new ConfigManager(this);
         snapMgr = new ChunkSnapshotManager(this);
         tracker = new MovementTracker(this);
@@ -54,17 +58,25 @@ public class RaycastedEntityOcclusion extends JavaPlugin implements CommandExecu
         int pluginId = 24553;
         new Metrics(this, pluginId);
 
-        new BukkitRunnable() {
+        new UniversalRunnable() {
             @Override
             public void run() {
                 tick++;
                 Engine.runEngine(cfg, snapMgr, tracker, RaycastedEntityOcclusion.this);
                 Engine.runTileEngine(cfg, snapMgr, tracker, RaycastedEntityOcclusion.this);
             }
-        }.runTaskTimer(this, 0L, 1L);
+        }.runTaskTimer(this, 1L, 1L);
+    }
+    
+    @Override
+    public void onDisable() {
+        this.getScheduler().cancelTasks(this);
     }
 
     public ConfigManager getConfigManager() {
         return cfg;
+    }
+    public static TaskScheduler getScheduler() {
+        return scheduler;
     }
 }

@@ -5,7 +5,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import com.github.Anon8281.universalScheduler.UniversalRunnable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,7 +35,7 @@ public class ChunkSnapshotManager {
             }
         }
 
-        new BukkitRunnable() {
+        new UniversalRunnable() {
             @Override
             public void run() {
                 long now = System.currentTimeMillis();
@@ -51,11 +51,11 @@ public class ChunkSnapshotManager {
                             plugin.getLogger().warning("ChunkSnapshotManager: World " + parts[0] + " not found. Please report this on our discord (discord.cubi.games)'");
                             continue;
                         }
-                        Chunk c = w.getChunkAt(
-                                Integer.parseInt(parts[1]),
-                                Integer.parseInt(parts[2])
-                        );
-                        e.setValue(takeSnapshot(c, now));
+                        Location loc = new Location(w, Integer.parseInt(parts[1]), 0, Integer.parseInt(parts[2]));
+                        RaycastedEntityOcclusion.getScheduler().runTask(loc, () -> {
+                            Chunk c = w.getChunkAt(loc);
+                            e.setValue(takeSnapshot(c, now));
+                        });
                     }
                 }
                 if (cfg.debugMode) {
@@ -75,26 +75,28 @@ public class ChunkSnapshotManager {
 
     // Used by SnapshotListener to update the delta map when a block is placed or broken
     public void onBlockChange(Location loc, Material m) {
-        if (cfg.debugMode) {
-            Bukkit.getLogger().info("ChunkSnapshotManager: Block change at " + loc + " to " + m);
-        }
-        Data d = dataMap.get(key(loc.getChunk()));
-        if (d != null) {
-            d.delta.put(loc, m);
-            if (cfg.checkTileEntities) {
-                // Check if the block is a tile entity
-                BlockState data = loc.getBlock().getState();
-                loc = loc.clone().add(0.5, 0, 0.5);
-                if (data instanceof TileState) {
-                    if (cfg.debugMode){
-                        Bukkit.getLogger().info("ChunkSnapshotManager: Tile entity at " + loc);
+        RaycastedEntityOcclusion.getScheduler().runTask(loc, () -> {
+            Data d = dataMap.get(key(loc.getChunk()));
+            if (d != null) {
+                d.delta.put(loc, m);
+                if (cfg.checkTileEntities) {
+                    // Check if the block is a tile entity
+                    BlockState data = loc.getBlock().getState();
+                    Location centerLoc = loc.clone().add(0.5, 0, 0.5);
+                    if (data instanceof TileState) {
+                        if (cfg.debugMode){
+                            Bukkit.getLogger().info("ChunkSnapshotManager: Tile entity at " + centerLoc);
+                        }
+                        d.tileEntities.add(centerLoc);
+                    } else {
+                        d.tileEntities.remove(centerLoc);
                     }
-                    d.tileEntities.add(loc);
-                } else {
-                    d.tileEntities.remove(loc);
                 }
             }
-        }
+            if (cfg.debugMode) {
+                Bukkit.getLogger().info("ChunkSnapshotManager: Block change at " + loc + " to " + m);
+            }
+        });
     }
 
     private Data takeSnapshot(Chunk c, long now) {

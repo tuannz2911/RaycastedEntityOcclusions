@@ -115,7 +115,7 @@ public class Metrics {
                         this::appendServiceData,
                         isFolia
                                 ? null
-                                : submitDataTask -> Bukkit.getScheduler().runTask(plugin, submitDataTask),
+                                : submitDataTask -> RaycastedEntityOcclusion.getScheduler().runTask(plugin, submitDataTask),
                         plugin::isEnabled,
                         (message, error) -> this.plugin.getLogger().log(Level.WARNING, message, error),
                         (message) -> this.plugin.getLogger().log(Level.INFO, message),
